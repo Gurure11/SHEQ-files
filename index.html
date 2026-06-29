@@ -1426,7 +1426,7 @@
             <div class="demo-cred">
                 Demo: <code>admin@sheq.com</code> / <code>admin123</code>
                 <br />
-                <span style="font-size:12px;color:var(--gray-400);">(Works with Google Sheets backend)</span>
+                <span style="font-size:12px;color:var(--gray-400);">(Connected to Google Sheets)</span>
             </div>
         </div>
     </div>
@@ -1571,8 +1571,9 @@
     <script>
         /**
          * ================================================================
-         *  SHEQ PRO - Full Frontend with Google Sheets Backend Integration
-         *  All data is stored in Google Sheets via AppScript API
+         *  SHEQ PRO - Google Sheets Backend Integration
+         *  Sheet ID: 1k96YHfBB9R5CYxJZER6aG8xGz2tPJKEdc4N6emXJevk
+         *  Sheet Name: SHEQ-reports
          *  ================================================================
          */
 
@@ -1580,44 +1581,60 @@
         // CONFIGURATION
         // ================================================================
 
-        /**
-         *  ⚠️ IMPORTANT: Replace this URL with your Google Apps Script
-         *  deployment URL after you set up the backend.
-         */
         const CONFIG = {
-            // Google Apps Script Web App URL - Replace with your own!
-            API_URL: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
+            // Your Google Sheet ID
+            SHEET_ID: '1k96YHfBB9R5CYxJZER6aG8xGz2tPJKEdc4N6emXJevk',
 
-            // If you want to test without a backend, set USE_MOCK to true
-            USE_MOCK: false, // Set to false when backend is ready
+            // Sheet name where data is stored
+            SHEET_NAME: 'SHEQ-reports',
 
-            // Demo data for mock mode
+            /**
+             * ⚠️ IMPORTANT: Replace this URL with your Google Apps Script
+             * deployment URL after you deploy the AppScript.
+             * 
+             * To deploy:
+             * 1. Open the Google Sheet linked above
+             * 2. Go to Extensions → Apps Script
+             * 3. Paste the AppScript code (provided below)
+             * 4. Click Deploy → New deployment
+             * 5. Select "Web app" and set access to "Anyone"
+             * 6. Copy the deployment URL
+             * 7. Paste it below
+             */
+            APPSCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxzcIEtnouttqf5u1xAgHajYOoQcDoRjfyOx8iZ5NW3_BETR4EUpL6VXYkwkAtn8qUH8g/exec',
+
+            // If true, use local mock data instead of Google Sheets
+            USE_MOCK: false, // Set to false when AppScript is deployed
+
+            // Mock data for testing
             MOCK_DATA: {
                 documents: [
-                    { id: 1, title: 'Health & Safety Policy', category: 'policy', version: '2.1', status: 'approved',
-                        uploadedBy: 'Admin', createdAt: '2026-01-15' },
-                    { id: 2, title: 'Risk Assessment Template', category: 'risk_assessment', version: '1.0',
+                    { id: 'doc1', title: 'Health & Safety Policy', category: 'policy', version: '2.1',
+                        status: 'approved', uploadedBy: 'Admin', createdAt: '2026-01-15' },
+                    { id: 'doc2', title: 'Risk Assessment Template', category: 'risk_assessment', version: '1.0',
                         status: 'draft', uploadedBy: 'Manager', createdAt: '2026-01-20' },
-                    { id: 3, title: 'Fire Drill Procedure', category: 'procedure', version: '3.0', status: 'review',
-                        uploadedBy: 'Admin', createdAt: '2026-01-25' },
+                    { id: 'doc3', title: 'Fire Drill Procedure', category: 'procedure', version: '3.0',
+                        status: 'review', uploadedBy: 'Admin', createdAt: '2026-01-25' },
                 ],
                 incidents: [
-                    { id: 1, title: 'Slip on wet floor', type: 'accident', severity: 'medium', status: 'open',
-                        location: 'Warehouse A', date: '2026-01-28', description: 'Employee slipped on wet floor...' },
-                    { id: 2, title: 'Near miss with forklift', type: 'near_miss', severity: 'high', status: 'investigating',
-                        location: 'Loading Bay', date: '2026-01-26', description: 'Forklift nearly struck pedestrian...' },
+                    { id: 'inc1', title: 'Slip on wet floor', type: 'accident', severity: 'medium',
+                        status: 'open', location: 'Warehouse A', date: '2026-01-28',
+                        description: 'Employee slipped on wet floor...' },
+                    { id: 'inc2', title: 'Near miss with forklift', type: 'near_miss', severity: 'high',
+                        status: 'investigating', location: 'Loading Bay', date: '2026-01-26',
+                        description: 'Forklift nearly struck pedestrian...' },
                 ],
                 inspections: [
-                    { id: 1, title: 'Monthly Site Inspection', type: 'site', status: 'completed',
+                    { id: 'ins1', title: 'Monthly Site Inspection', type: 'site', status: 'completed',
                         overallStatus: 'pass', date: '2026-01-20', inspector: 'Admin' },
                 ],
                 audits: [
-                    { id: 1, title: 'ISO 45001 Internal Audit', type: 'internal', status: 'in_progress',
+                    { id: 'aud1', title: 'ISO 45001 Internal Audit', type: 'internal', status: 'in_progress',
                         date: '2026-02-01', auditor: 'Admin' },
                 ],
                 training: [
-                    { id: 1, title: 'Fire Warden Training', type: 'specialist', date: '2026-01-10',
-                    trainer: 'Safety Officer' },
+                    { id: 'tr1', title: 'Fire Warden Training', type: 'specialist', date: '2026-01-10',
+                        trainer: 'Safety Officer' },
                 ]
             }
         };
@@ -1706,30 +1723,6 @@
             return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
-        function getStatusClass(status) {
-            const map = {
-                'approved': 'approved',
-                'draft': 'draft',
-                'review': 'review',
-                'archived': 'archived',
-                'open': 'open',
-                'closed': 'closed',
-                'investigating': 'investigating',
-                'low': 'low',
-                'medium': 'medium',
-                'high': 'high',
-                'critical': 'critical',
-                'pass': 'approved',
-                'fail': 'critical',
-                'conditional': 'review',
-                'completed': 'approved',
-                'in_progress': 'investigating',
-                'planned': 'draft',
-                'scheduled': 'draft',
-            };
-            return map[status] || 'draft';
-        }
-
         function getCategoryLabel(cat) {
             const map = {
                 'policy': 'Policy',
@@ -1811,15 +1804,15 @@
         }
 
         // ================================================================
-        // API - Google Sheets Backend
+        // API - Google Sheets Backend via AppScript
         // ================================================================
 
         /**
          * Make a request to the Google Apps Script backend
          * The backend should accept POST requests with:
-         *   - action: 'get' or 'post'
+         *   - action: 'get' | 'post' | 'update' | 'delete'
          *   - sheet: 'documents' | 'incidents' | 'inspections' | 'audits' | 'training'
-         *   - data: object (for post actions)
+         *   - data: object (for post/update actions)
          *   - id: string (for delete/update)
          */
         async function apiRequest(action, sheet, data = null, id = null) {
@@ -1832,38 +1825,37 @@
                 const payload = {
                     action: action,
                     sheet: sheet,
+                    sheetId: CONFIG.SHEET_ID,
+                    sheetName: CONFIG.SHEET_NAME,
                 };
 
                 if (data) payload.data = data;
                 if (id) payload.id = id;
 
-                const response = await fetch(CONFIG.API_URL, {
+                const response = await fetch(CONFIG.APPSCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Required for Google Apps Script
+                    mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(payload),
                 });
 
-                // Because of no-cors, we can't read the response directly.
-                // Google Apps Script returns text, but no-cors blocks reading.
-                // We'll use a workaround: the script returns a redirect or HTML.
-                // For production, use a proxy or JSONP.
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-                // For now, we'll simulate success and return mock data.
-                // ⚠️ In production, implement a proper CORS proxy or use
-                // fetch with mode: 'cors' and configure the script to return
-                // proper CORS headers.
-
-                console.warn('API call made to Google Sheets. Ensure your AppScript is deployed and CORS is configured.');
-                showToast('API call made. Check Google Sheets for updates.', 'info');
-
-                // Return mock data as fallback for now
-                return mockApiRequest(action, sheet, data, id);
+                const result = await response.json();
+                return result;
             } catch (error) {
                 console.error('API Error:', error);
                 showToast('Error communicating with backend: ' + error.message, 'error');
+
+                // Fallback to mock data if API fails
+                if (!CONFIG.USE_MOCK) {
+                    showToast('Falling back to mock data mode.', 'warning');
+                    return mockApiRequest(action, sheet, data, id);
+                }
                 return { success: false, error: error.message };
             }
         }
@@ -1882,7 +1874,6 @@
                 case 'post':
                     const newItem = { ...data, id: generateId(), createdAt: new Date().toISOString() };
                     collection.push(newItem);
-                    // Update mock data
                     CONFIG.MOCK_DATA[sheet] = collection;
                     result = { success: true, data: newItem };
                     break;
@@ -2027,12 +2018,10 @@
                 { label: 'Open Incidents', value: openIncidents, icon: 'fa-clock', color: 'orange' },
             ];
 
-            // Recent items
             const recentDocs = [...docs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
             const recentIncidents = [...incidents].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
 
             let html = `
-                <!-- Stats -->
                 <div class="stats-grid">
                     ${stats.map(s => `
                         <div class="stat-card">
@@ -2047,7 +2036,6 @@
                     `).join('')}
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="quick-actions">
                     <button class="quick-action-btn" onclick="openModal('document')">
                         <i class="fas fa-upload color-blue"></i>
@@ -2067,7 +2055,6 @@
                     </button>
                 </div>
 
-                <!-- Recent Activity -->
                 <div class="section-grid">
                     <div class="section-card">
                         <div class="section-header">
@@ -2203,7 +2190,6 @@
 
             container.innerHTML = html;
 
-            // Filter events
             const filterCategory = container.querySelector('#docFilterCategory');
             const filterStatus = container.querySelector('#docFilterStatus');
             const searchInput = container.querySelector('#docSearch');
@@ -2311,7 +2297,6 @@
 
             container.innerHTML = html;
 
-            // Filter events
             const filterType = container.querySelector('#incFilterType');
             const filterSeverity = container.querySelector('#incFilterSeverity');
             const filterStatus = container.querySelector('#incFilterStatus');
@@ -2412,7 +2397,6 @@
 
             container.innerHTML = html;
 
-            // Simple filters
             const filterType = container.querySelector('#inspFilterType');
             const filterStatus = container.querySelector('#inspFilterStatus');
 
@@ -2618,14 +2602,20 @@
                     <div class="section-body" style="padding:24px;">
                         <div style="margin-bottom:24px;">
                             <h4 style="font-size:14px;font-weight:600;margin-bottom:8px;">Google Sheets Backend</h4>
+                            <p style="font-size:13px;color:var(--gray-500);margin-bottom:4px;">
+                                <strong>Sheet ID:</strong> <code style="background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:12px;">${CONFIG.SHEET_ID}</code>
+                            </p>
                             <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">
-                                Current API URL: <code style="background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:12px;">${CONFIG.API_URL}</code>
+                                <strong>Sheet Name:</strong> <code style="background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:12px;">${CONFIG.SHEET_NAME}</code>
+                            </p>
+                            <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">
+                                <strong>AppScript URL:</strong> <code style="background:var(--gray-100);padding:2px 8px;border-radius:4px;font-size:11px;word-break:break-all;">${CONFIG.APPSCRIPT_URL}</code>
                             </p>
                             <p style="font-size:13px;color:var(--gray-500);">
-                                Status: <span class="item-status approved">${CONFIG.USE_MOCK ? 'Mock Mode' : 'Connected'}</span>
+                                Status: <span class="item-status ${CONFIG.USE_MOCK ? 'review' : 'approved'}">${CONFIG.USE_MOCK ? '⚠️ Mock Mode' : '✅ Connected to Google Sheets'}</span>
                             </p>
                             <p style="font-size:12px;color:var(--gray-400);margin-top:8px;">
-                                ${CONFIG.USE_MOCK ? '⚠️ Running in mock mode. Set USE_MOCK=false and configure your AppScript URL.' : '✅ Backend integration active.'}
+                                ${CONFIG.USE_MOCK ? '⚠️ Running in mock mode. Deploy your AppScript and set USE_MOCK=false.' : '✅ Backend integration active with your Google Sheet.'}
                             </p>
                         </div>
                         <div style="border-top:1px solid var(--gray-200);padding-top:20px;">
@@ -2657,7 +2647,6 @@
             const body = DOM.modalBody;
             const submitBtn = DOM.modalSubmit;
 
-            // Reset
             DOM.modalSubmitText.textContent = 'Save';
             DOM.modalSubmitSpinner.style.display = 'none';
             submitBtn.disabled = false;
@@ -2727,9 +2716,9 @@
                             status: document.getElementById('docStatus').value,
                             expiryDate: document.getElementById('docExpiry').value,
                             description: document.getElementById('docDescription').value,
+                            uploadedBy: state.user?.name || 'Admin',
                         };
                         if (data) {
-                            // Update
                             const result = await apiRequest('update', 'documents', docData, data.id);
                             if (result.success !== false) {
                                 showToast('Document updated successfully!', 'success');
@@ -2738,7 +2727,6 @@
                                 showToast('Failed to update document', 'error');
                             }
                         } else {
-                            // Create
                             const result = await apiRequest('post', 'documents', docData);
                             if (result.success !== false) {
                                 showToast('Document uploaded successfully!', 'success');
@@ -2816,6 +2804,7 @@
                             location: document.getElementById('incLocation').value,
                             description: desc,
                             status: document.getElementById('incStatus').value,
+                            reportedBy: state.user?.name || 'Admin',
                         };
                         if (data) {
                             const result = await apiRequest('update', 'incidents', incData, data.id);
@@ -2889,6 +2878,7 @@
                             overallStatus: document.getElementById('inspOverall').value,
                             recommendations: document.getElementById('inspRecommendations').value,
                             status: 'completed',
+                            inspector: state.user?.name || 'Admin',
                         };
                         if (data) {
                             const result = await apiRequest('update', 'inspections', inspData, data.id);
@@ -3053,11 +3043,8 @@
 
             body.innerHTML = fields;
             modal.classList.add('active');
-
-            // Store callback
             state.modalCallback = callback;
 
-            // Submit handler
             submitBtn.onclick = async () => {
                 if (state.modalCallback) {
                     submitBtn.disabled = true;
@@ -3098,7 +3085,6 @@
                 showToast('Item not found', 'error');
                 return;
             }
-            // Simple view: show in a modal
             const modal = DOM.modalOverlay;
             DOM.modalTitle.textContent = 'View Details';
             const fields = Object.entries(item)
@@ -3121,7 +3107,6 @@
                 showToast('Item not found', 'error');
                 return;
             }
-            // Map sheet name to modal type
             const typeMap = {
                 'documents': 'document',
                 'incidents': 'incident',
@@ -3146,9 +3131,7 @@
 
         function navigateTo(page) {
             renderPage(page);
-            // Close mobile sidebar
             closeMobileSidebar();
-            // Update URL hash
             window.location.hash = page;
         }
 
@@ -3187,7 +3170,6 @@
         // ================================================================
 
         function login(email, password) {
-            // Simple validation - In production, verify with backend
             if (email && password) {
                 state.user = {
                     name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
@@ -3203,9 +3185,7 @@
                 DOM.loginPage.style.display = 'none';
                 DOM.appContainer.style.display = 'flex';
 
-                // Load data
                 loadAllData();
-
                 showToast(`Welcome back, ${state.user.name}!`, 'success');
                 return true;
             }
@@ -3233,6 +3213,8 @@
                 audits: state.data.audits || [],
                 training: state.data.training || [],
                 exportedAt: new Date().toISOString(),
+                sheetId: CONFIG.SHEET_ID,
+                sheetName: CONFIG.SHEET_NAME,
             };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -3254,7 +3236,6 @@
                         audits: [],
                         training: [],
                     };
-                    // Also clear mock data
                     CONFIG.MOCK_DATA = {
                         documents: [],
                         incidents: [],
@@ -3273,7 +3254,6 @@
         // EVENT LISTENERS
         // ================================================================
 
-        // Login
         DOM.loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = DOM.loginEmail.value.trim();
@@ -3290,7 +3270,6 @@
             DOM.loginBtnSpinner.style.display = 'inline';
             DOM.loginError.classList.remove('show');
 
-            // Simulate async login
             setTimeout(() => {
                 const success = login(email, password);
                 if (!success) {
@@ -3303,10 +3282,8 @@
             }, 600);
         });
 
-        // Logout
         DOM.logoutBtn.addEventListener('click', logout);
 
-        // Navigation
         DOM.navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -3315,32 +3292,25 @@
             });
         });
 
-        // Sidebar toggle
         DOM.sidebarToggle.addEventListener('click', toggleSidebar);
-
-        // Mobile menu
         DOM.mobileMenuBtn.addEventListener('click', openMobileSidebar);
         DOM.sidebarOverlay.addEventListener('click', closeMobileSidebar);
 
-        // Modal close
         DOM.modalClose.addEventListener('click', closeModal);
         DOM.modalCancel.addEventListener('click', closeModal);
         DOM.modalOverlay.addEventListener('click', (e) => {
             if (e.target === DOM.modalOverlay) closeModal();
         });
 
-        // Refresh
         DOM.refreshBtn.addEventListener('click', () => {
             showToast('Refreshing data...', 'info');
             loadAllData();
         });
 
-        // Global search
         DOM.globalSearch.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const query = DOM.globalSearch.value.trim().toLowerCase();
                 if (query) {
-                    // Simple search across all data
                     const allItems = [
                         ...(state.data.documents || []).map(d => ({ ...d, _type: 'document' })),
                         ...(state.data.incidents || []).map(d => ({ ...d, _type: 'incident' })),
@@ -3359,7 +3329,6 @@
             }
         });
 
-        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'k') {
                 e.preventDefault();
@@ -3371,7 +3340,6 @@
             }
         });
 
-        // Handle hash-based navigation
         window.addEventListener('hashchange', () => {
             const page = window.location.hash.replace('#', '') || 'dashboard';
             if (['dashboard', 'documents', 'incidents', 'inspections', 'audits', 'training', 'settings'].includes(page)) {
@@ -3383,7 +3351,6 @@
         // INITIALIZATION
         // ================================================================
 
-        // Check if user is already logged in (session)
         const savedUser = localStorage.getItem('sheq_user');
         if (savedUser) {
             try {
@@ -3395,7 +3362,6 @@
                 DOM.loginPage.style.display = 'none';
                 DOM.appContainer.style.display = 'flex';
                 loadAllData();
-                // Navigate to hash or dashboard
                 const page = window.location.hash.replace('#', '') || 'dashboard';
                 if (['dashboard', 'documents', 'incidents', 'inspections', 'audits', 'training', 'settings'].includes(page)) {
                     renderPage(page);
@@ -3406,12 +3372,10 @@
                 localStorage.removeItem('sheq_user');
             }
         } else {
-            // Show login
             DOM.loginPage.style.display = 'flex';
             DOM.appContainer.style.display = 'none';
         }
 
-        // Save user on login
         const origLogin = login;
         login = function(email, password) {
             const result = origLogin.call(this, email, password);
@@ -3421,7 +3385,6 @@
             return result;
         };
 
-        // Clear user on logout
         const origLogout = logout;
         logout = function() {
             localStorage.removeItem('sheq_user');
@@ -3429,11 +3392,12 @@
         };
 
         console.log('🏗️ SHEQ Pro loaded successfully!');
+        console.log(`📊 Sheet ID: ${CONFIG.SHEET_ID}`);
+        console.log(`📊 Sheet Name: ${CONFIG.SHEET_NAME}`);
+        console.log(`🔗 AppScript URL: ${CONFIG.APPSCRIPT_URL}`);
         console.log(`📊 ${CONFIG.USE_MOCK ? 'Mock Mode' : 'Connected to Google Sheets'}`);
-        console.log('🔗 API URL:', CONFIG.API_URL);
         console.log('💡 Press Ctrl+K to search');
 
-        // Expose functions to global scope for inline onclick handlers
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.deleteItem = deleteItem;
@@ -3445,9 +3409,6 @@
         window.confirmClearData = confirmClearData;
         window.showToast = showToast;
 
-        // ================================================================
-        // END OF JAVASCRIPT
-        // ================================================================
         console.log('✅ SHEQ Pro initialized successfully!');
     </script>
 
