@@ -1582,61 +1582,11 @@
         // ================================================================
 
         const CONFIG = {
-            // Your Google Sheet ID
             SHEET_ID: '1k96YHfBB9R5CYxJZER6aG8xGz2tPJKEdc4N6emXJevk',
-
-            // Sheet name where data is stored
             SHEET_NAME: 'SHEQ-reports',
-
-            /**
-             * ⚠️ IMPORTANT: Replace this URL with your Google Apps Script
-             * deployment URL after you deploy the AppScript.
-             * 
-             * To deploy:
-             * 1. Open the Google Sheet linked above
-             * 2. Go to Extensions → Apps Script
-             * 3. Paste the AppScript code (provided below)
-             * 4. Click Deploy → New deployment
-             * 5. Select "Web app" and set access to "Anyone"
-             * 6. Copy the deployment URL
-             * 7. Paste it below
-             */
+            // IMPORTANT: Replace with your actual deployed Apps Script URL
             APPSCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxzcIEtnouttqf5u1xAgHajYOoQcDoRjfyOx8iZ5NW3_BETR4EUpL6VXYkwkAtn8qUH8g/exec',
-
-            // If true, use local mock data instead of Google Sheets
-            USE_MOCK: false, // Set to false when AppScript is deployed
-
-            // Mock data for testing
-            MOCK_DATA: {
-                documents: [
-                    { id: 'doc1', title: 'Health & Safety Policy', category: 'policy', version: '2.1',
-                        status: 'approved', uploadedBy: 'Admin', createdAt: '2026-01-15' },
-                    { id: 'doc2', title: 'Risk Assessment Template', category: 'risk_assessment', version: '1.0',
-                        status: 'draft', uploadedBy: 'Manager', createdAt: '2026-01-20' },
-                    { id: 'doc3', title: 'Fire Drill Procedure', category: 'procedure', version: '3.0',
-                        status: 'review', uploadedBy: 'Admin', createdAt: '2026-01-25' },
-                ],
-                incidents: [
-                    { id: 'inc1', title: 'Slip on wet floor', type: 'accident', severity: 'medium',
-                        status: 'open', location: 'Warehouse A', date: '2026-01-28',
-                        description: 'Employee slipped on wet floor...' },
-                    { id: 'inc2', title: 'Near miss with forklift', type: 'near_miss', severity: 'high',
-                        status: 'investigating', location: 'Loading Bay', date: '2026-01-26',
-                        description: 'Forklift nearly struck pedestrian...' },
-                ],
-                inspections: [
-                    { id: 'ins1', title: 'Monthly Site Inspection', type: 'site', status: 'completed',
-                        overallStatus: 'pass', date: '2026-01-20', inspector: 'Admin' },
-                ],
-                audits: [
-                    { id: 'aud1', title: 'ISO 45001 Internal Audit', type: 'internal', status: 'in_progress',
-                        date: '2026-02-01', auditor: 'Admin' },
-                ],
-                training: [
-                    { id: 'tr1', title: 'Fire Warden Training', type: 'specialist', date: '2026-01-10',
-                        trainer: 'Safety Officer' },
-                ]
-            }
+            USE_MOCK: false, // Set to false when Apps Script is deployed
         };
 
         // ================================================================
@@ -1676,28 +1626,23 @@
             loginBtnSpinner: $('#loginBtnSpinner'),
             loginError: $('#loginError'),
             loginErrorText: $('#loginErrorText'),
-
             sidebar: $('#sidebar'),
             sidebarToggle: $('#sidebarToggle'),
             toggleIcon: $('#toggleIcon'),
             sidebarOverlay: $('#sidebarOverlay'),
             mobileMenuBtn: $('#mobileMenuBtn'),
             mainContent: $('#mainContent'),
-
             navItems: $$('.nav-item'),
             pageTitle: $('#pageTitle'),
             pageSubtitle: $('#pageSubtitle'),
             pageContent: $('#pageContent'),
             pageRenderer: $('#pageRenderer'),
-
             userAvatar: $('#userAvatar'),
             userName: $('#userName'),
             userRole: $('#userRole'),
             logoutBtn: $('#logoutBtn'),
-
             docCount: $('#docCount'),
             incidentCount: $('#incidentCount'),
-
             modalOverlay: $('#modalOverlay'),
             modal: $('#modal'),
             modalTitle: $('#modalTitle'),
@@ -1707,7 +1652,6 @@
             modalSubmitSpinner: $('#modalSubmitSpinner'),
             modalCancel: $('#modalCancel'),
             modalClose: $('#modalClose'),
-
             refreshBtn: $('#refreshBtn'),
             globalSearch: $('#globalSearch'),
             toastContainer: $('#toastContainer'),
@@ -1807,14 +1751,6 @@
         // API - Google Sheets Backend via AppScript
         // ================================================================
 
-        /**
-         * Make a request to the Google Apps Script backend
-         * The backend should accept POST requests with:
-         *   - action: 'get' | 'post' | 'update' | 'delete'
-         *   - sheet: 'documents' | 'incidents' | 'inspections' | 'audits' | 'training'
-         *   - data: object (for post/update actions)
-         *   - id: string (for delete/update)
-         */
         async function apiRequest(action, sheet, data = null, id = null) {
             // If in mock mode, handle locally
             if (CONFIG.USE_MOCK) {
@@ -1860,11 +1796,43 @@
             }
         }
 
-        /**
-         * Mock API for testing without a backend
-         */
+        // ================================================================
+        // MOCK DATA
+        // ================================================================
+
+        const MOCK_DATA = {
+            documents: [
+                { id: 'doc1', title: 'Health & Safety Policy', category: 'policy', version: '2.1',
+                    status: 'approved', uploadedBy: 'Admin', createdAt: '2026-01-15' },
+                { id: 'doc2', title: 'Risk Assessment Template', category: 'risk_assessment', version: '1.0',
+                    status: 'draft', uploadedBy: 'Manager', createdAt: '2026-01-20' },
+                { id: 'doc3', title: 'Fire Drill Procedure', category: 'procedure', version: '3.0',
+                    status: 'review', uploadedBy: 'Admin', createdAt: '2026-01-25' },
+            ],
+            incidents: [
+                { id: 'inc1', title: 'Slip on wet floor', type: 'accident', severity: 'medium',
+                    status: 'open', location: 'Warehouse A', date: '2026-01-28',
+                    description: 'Employee slipped on wet floor...' },
+                { id: 'inc2', title: 'Near miss with forklift', type: 'near_miss', severity: 'high',
+                    status: 'investigating', location: 'Loading Bay', date: '2026-01-26',
+                    description: 'Forklift nearly struck pedestrian...' },
+            ],
+            inspections: [
+                { id: 'ins1', title: 'Monthly Site Inspection', type: 'site', status: 'completed',
+                    overallStatus: 'pass', date: '2026-01-20', inspector: 'Admin' },
+            ],
+            audits: [
+                { id: 'aud1', title: 'ISO 45001 Internal Audit', type: 'internal', status: 'in_progress',
+                    date: '2026-02-01', auditor: 'Admin' },
+            ],
+            training: [
+                { id: 'tr1', title: 'Fire Warden Training', type: 'specialist', date: '2026-01-10',
+                    trainer: 'Safety Officer' },
+            ]
+        };
+
         function mockApiRequest(action, sheet, data, id) {
-            const collection = CONFIG.MOCK_DATA[sheet] || [];
+            const collection = MOCK_DATA[sheet] || [];
             let result = [];
 
             switch (action) {
@@ -1874,14 +1842,14 @@
                 case 'post':
                     const newItem = { ...data, id: generateId(), createdAt: new Date().toISOString() };
                     collection.push(newItem);
-                    CONFIG.MOCK_DATA[sheet] = collection;
+                    MOCK_DATA[sheet] = collection;
                     result = { success: true, data: newItem };
                     break;
                 case 'delete':
                     const idx = collection.findIndex(item => item.id === id);
                     if (idx > -1) {
                         collection.splice(idx, 1);
-                        CONFIG.MOCK_DATA[sheet] = collection;
+                        MOCK_DATA[sheet] = collection;
                         result = { success: true };
                     } else {
                         result = { success: false, error: 'Item not found' };
@@ -1891,7 +1859,7 @@
                     const updateIdx = collection.findIndex(item => item.id === id);
                     if (updateIdx > -1) {
                         collection[updateIdx] = { ...collection[updateIdx], ...data, updatedAt: new Date().toISOString() };
-                        CONFIG.MOCK_DATA[sheet] = collection;
+                        MOCK_DATA[sheet] = collection;
                         result = { success: true, data: collection[updateIdx] };
                     } else {
                         result = { success: false, error: 'Item not found' };
@@ -1901,7 +1869,6 @@
                     result = { success: false, error: 'Unknown action' };
             }
 
-            // Update state data if get action
             if (action === 'get') {
                 state.data[sheet] = result;
             }
@@ -1949,12 +1916,10 @@
             state.currentPage = page;
             const renderer = DOM.pageRenderer;
 
-            // Update nav active state
             DOM.navItems.forEach(item => {
                 item.classList.toggle('active', item.dataset.page === page);
             });
 
-            // Update page title
             const titles = {
                 dashboard: { title: 'Dashboard', subtitle: 'Overview of your SHEQ system' },
                 documents: { title: 'Documents', subtitle: 'Manage policies, procedures, and records' },
@@ -1969,7 +1934,6 @@
             DOM.pageTitle.textContent = info.title;
             DOM.pageSubtitle.textContent = info.subtitle;
 
-            // Render based on page
             switch (page) {
                 case 'dashboard':
                     renderDashboard(renderer);
@@ -3236,13 +3200,9 @@
                         audits: [],
                         training: [],
                     };
-                    CONFIG.MOCK_DATA = {
-                        documents: [],
-                        incidents: [],
-                        inspections: [],
-                        audits: [],
-                        training: [],
-                    };
+                    // Also clear mock data
+                    const mockDataKeys = ['documents', 'incidents', 'inspections', 'audits', 'training'];
+                    mockDataKeys.forEach(key => MOCK_DATA[key] = []);
                     updateBadges();
                     renderPage(state.currentPage);
                     showToast('All data cleared.', 'warning');
